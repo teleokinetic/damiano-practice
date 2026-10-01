@@ -10,7 +10,7 @@
 
 const STORE_KEY = 'damiano-state-v1';
 const V1_KEY = 'damiano-no-v1';        // read-only: migration source, never written
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 
 let state = null;
 

@@ -57,6 +57,8 @@ function defaultVideoReqs() {
 
 function videoReq(key) { return state && state.videoReqs ? state.videoReqs[key] : null; }
 function videoIsOpen(key) { const r = videoReq(key); return !!(r && r.status === 'open'); }
+// 'saved' is the demo build's word for a clip kept on the phone; it uploads like 'sending'.
+function videoIsSending(key) { const r = videoReq(key); return !!(r && (r.status === 'sending' || r.status === 'saved')); }
 
 function dayVideoKeys(day) {
   const keys = [];
@@ -81,9 +83,9 @@ function videoChipHTML(day, slot) {
   if (!slot.video || !VIDEO_LIFTS[slot.video]) return '';
   const r = videoReq(slot.video);
   if (!r || r.status === 'received') return '';
-  const sent = r.status === 'saved';
+  const sent = videoIsSending(slot.video);
   return `<a class="vidchip ${sent ? 'sent' : ''}" href="#/video/${slot.video}/${day.id}"
-    aria-label="${sent ? 'Video saved' : 'Tanner asked for a video'}">${icon('camera', 2)}${sent ? '<i class="vid-ok"></i>' : ''}</a>`;
+    aria-label="${sent ? 'Video sending' : 'Tanner asked for a video'}">${icon('camera', 2)}${sent ? '<i class="vid-ok"></i>' : ''}</a>`;
 }
 
 /* ---- draft (in memory: survives moving around the app) ---- */
@@ -148,19 +150,15 @@ function viewVideo(key, dayId) {
       ${vidMsg ? `<div class="vid-msg">${esc(vidMsg)}</div>` : ''}
     </div>`;
 
-  if (r.status === 'saved') return `
+  if (videoIsSending(key) || r.status === 'received') return `
     ${topbar(back)}
     <div class="vid">
       <div class="vid-k">Video for Tanner</div>
       <div class="dayhead-name">${esc(lift.name)}</div>
-      <div class="vid-done">
-        <span class="vid-done-mark">${earMini()}</span>
-        <div class="vid-done-line">Saved on this phone</div>
-        <div class="vid-done-sub">It goes to Tanner automatically once sync is on.</div>
-      </div>
+      <div class="vid-done" data-upstatus="${key}">${uploadStatusHTML(key)}</div>
       ${captureInputsHTML(key, dayId)}
       <div class="vid-actions">
-        <label for="vidcap" class="vidbtn">Replace</label>
+        ${r.status === 'received' ? '<span></span>' : '<label for="vidcap" class="vidbtn">Replace</label>'}
         <a class="finishbtn solid ready" href="${back}">Done</a>
       </div>
     </div>`;
@@ -305,18 +303,23 @@ async function sendVideo(key) {
   if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
   const meta = Object.assign({}, d.meta);
   const trim = { start: +d.a.toFixed(2), end: d.b == null ? null : +d.b.toFixed(2) };
+  const id = key + '-' + Date.now();
   try {
+    // A replacement retires the earlier clip for this lift, sent or not.
+    const prev = videoReq(key);
+    if (prev && prev.clipId) { try { await patchClip(prev.clipId, { state: 'replaced', blob: null }); } catch (e) {} }
     await putClip({
-      id: key + '-' + Date.now(), key, at: Date.now(), dayId: d.dayId,
-      trim, meta, type: d.file.type, size: d.file.size, name: d.file.name, blob: d.file, uploaded: false,
+      id, key, at: Date.now(), dayId: d.dayId, state: 'pending', offset: 0, uploadUrl: null,
+      trim, meta, type: d.file.type || 'video/quicktime', size: d.file.size, name: d.file.name, blob: d.file,
     });
-    state.videoReqs[key] = { status: 'saved', at: Date.now(), trim, meta };
+    state.videoReqs[key] = { status: 'sending', at: Date.now(), trim, meta, clipId: id };
     save();
     URL.revokeObjectURL(d.url);
     vidDraft = null;
     vidMsg = '';
+    uploadLive[key] = { phase: uploadsReady() ? 'uploading' : 'held', sent: 0, total: d.file.size };
     render();
-    toast('Saved on this phone');
+    processUploads();
   } catch (e) {
     vidMsg = "Couldn't save the clip on this phone. Your draft is still here. Try again.";
     render();

@@ -1,7 +1,7 @@
 /* Damiano — offline shell.
    Bump CACHE when shipping changes so clients pick up the new version. */
 
-const CACHE = 'damiano-v1.0.0';
+const CACHE = 'damiano-v1.1.0';
 // Critical shell is all-or-nothing; fonts/icons are best-effort so one
 // flaky request on gym wifi can't silently sink the whole update.
 const CRITICAL = [
@@ -10,7 +10,9 @@ const CRITICAL = [
   'styles.css',
   'app.js',
   'seed.js',
+  'config.js',
   'video.js',
+  'upload.js',
   'report.js',
   'manifest.webmanifest',
 ];
@@ -51,6 +53,10 @@ self.addEventListener('activate', (e) => {
 // Network-first for navigations (so updates land), cache-first for assets.
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  // Other sites pass straight through (uploads, the Drive script, bug notes);
+  // only their images (the framing references) are kept for offline.
+  const url = new URL(e.request.url);
+  if (url.origin !== self.location.origin && e.request.destination !== 'image') return;
   if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request)
