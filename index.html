@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Damiano</title>
+<meta name="description" content="Damiano's strength sessions with Tanner">
+<meta name="theme-color" content="#1C1617" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F1EEF1" media="(prefers-color-scheme: light)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Damiano">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+<script>
+  // Set the pinned theme before first paint so there's no flash.
+  try {
+    var s = JSON.parse(localStorage.getItem('damiano-state-v1'));
+    var t = s && s.settings && s.settings.theme;
+    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+</script>
+</head>
+<body>
+  <main id="app"></main>
+
+  <script src="seed.js"></script>
+  <script src="video.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () =>
+        navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }));
+    }
+  </script>
+</body>
+</html>
