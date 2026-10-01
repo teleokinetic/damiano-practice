@@ -811,6 +811,12 @@ body::before {
 @keyframes readyin { from { transform: scale(0.96); } }
 .finish-wrap { display: grid; gap: 12px; }
 .finish-hint { color: var(--dim); font-size: 15px; }
+.discardbtn {
+  display: block; margin: 10px auto 0; padding: 12px 18px;
+  background: none; border: 0; color: var(--dim); font: inherit; font-size: 15px;
+}
+.discardbtn.off { display: none; }
+.discardbtn.armed { color: var(--danger); font-weight: 600; }
 
 /* The closing card: what will save, as readable rows — the session as a
    finished object, not a form submission. */
