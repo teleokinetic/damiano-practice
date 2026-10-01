@@ -1177,7 +1177,7 @@ function icon(name, sw) {
 function topbar(backTo) {
   const left = backTo
     ? `<a class="backlink" href="${backTo}">${icon('back', 2.4)}Back</a>`
-    : `<div class="wordmark">Damiano <span class="half">Strength</span></div>`;
+    : `<div class="wordmark">Damiano’s <span class="half">Practice</span></div>`;
   const right = backTo ? '' : `<a class="gear" href="#/settings" aria-label="Settings">${icon('gear', 1.8)}</a>`;
   return `<div class="topbar ${backTo ? '' : 'home'}">${left}${right}</div>`;
 }

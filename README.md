@@ -1,6 +1,6 @@
-# Damiano
+# Damiano’s Practice
 
-Damiano's strength sessions with Tanner. Built on the Strength Rebuild app's layout, rest timer and animations, with its own palette (sky, coral, oxblood, mauve, dark earth) and a maple-samara ornament. Static PWA with no build step, served by GitHub Pages.
+Damiano's practice with Tanner: strength sessions now, with room for running and more later. Built on the Strength Rebuild app's layout, rest timer and animations, with its own palette (sky, coral, oxblood, mauve, dark earth) and a maple-samara ornament. Static PWA with no build step, served by GitHub Pages.
 
 ## What's in v1.0 (demo, Oct 1 2026)
 

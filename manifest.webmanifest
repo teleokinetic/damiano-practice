@@ -1,7 +1,7 @@
 {
-  "name": "Damiano",
-  "short_name": "Damiano",
-  "description": "Damiano's strength sessions with Tanner",
+  "name": "Damiano’s Practice",
+  "short_name": "Practice",
+  "description": "Damiano’s practice with Tanner",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -9,7 +9,15 @@
   "background_color": "#1C1617",
   "theme_color": "#1C1617",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
   ]
 }
