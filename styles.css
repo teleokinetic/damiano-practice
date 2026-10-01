@@ -175,7 +175,7 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 #app {
   max-width: 560px;
   margin: 0 auto;
-  padding: calc(env(safe-area-inset-top) + 6px) var(--gutter) calc(env(safe-area-inset-bottom) + 48px);
+  padding: calc(env(safe-area-inset-top) + 6px) var(--gutter) calc(env(safe-area-inset-bottom) + 96px);
 }
 /* Home is one screen: no scroll room below the week strip. */
 #app[data-view="home"] { padding-bottom: calc(env(safe-area-inset-bottom) + 12px); }
@@ -1043,7 +1043,7 @@ body::before {
 /* ---------- toast ---------- */
 
 #toast {
-  position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 22px);
+  position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 78px);
   transform: translateX(-50%) translateY(14px) scale(0.96);
   background: var(--glass); color: var(--ink);
   -webkit-backdrop-filter: saturate(180%) blur(22px);
@@ -1148,3 +1148,46 @@ body::before {
 .rrow-skip { color: var(--faint); font-size: 15px; }
 .rrow-part { color: var(--dim); font-family: var(--body); font-size: 13px; margin-right: 6px; }
 .frame img { min-height: 220px; }
+
+/* "Something off?": a small button that stays put in the corner, and its sheet. */
+.rp-fab {
+  position: fixed; z-index: 40;
+  right: max(16px, calc((100vw - 560px) / 2 + 16px));
+  bottom: calc(env(safe-area-inset-bottom) + 16px);
+  width: 48px; height: 48px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--surface); color: var(--dim);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22), 0 0 0 0.5px var(--sep);
+}
+.rp-fab .ico { width: 22px; height: 22px; }
+.rp-fab[aria-expanded="true"] { color: var(--brass-ink); }
+body.splashing .rp-fab { opacity: 0; }
+.rp-scrim { position: fixed; inset: 0; z-index: 41; background: rgba(20, 12, 12, 0.42); }
+.rp-sheet {
+  position: fixed; z-index: 42; left: 0; right: 0; bottom: 0;
+  max-width: 560px; margin: 0 auto;
+  padding: 18px var(--gutter) calc(env(safe-area-inset-bottom) + 16px);
+  background: var(--bg); border-radius: 22px 22px 0 0;
+  box-shadow: 0 -6px 30px rgba(0, 0, 0, 0.25);
+  display: grid; gap: 12px;
+  animation: rpin 0.28s var(--ease);
+}
+@keyframes rpin { from { transform: translateY(24px); opacity: 0; } }
+.rp-head { display: grid; gap: 2px; }
+.rp-title { font-size: 20px; font-weight: 700; letter-spacing: -0.015em; }
+.rp-where { color: var(--dim); font-size: 14px; }
+.rp-sheet textarea {
+  width: 100%; resize: none; border: none; border-radius: 14px;
+  background: var(--surface); box-shadow: var(--card-shadow);
+  padding: 12px 14px; font-size: 16px; line-height: 1.4;
+}
+.rp-status { color: var(--dim); font-size: 14px; min-height: 0; }
+.rp-status:empty { display: none; }
+.rp-actions { display: grid; grid-template-columns: 1fr 1.6fr; gap: 10px; }
+.rp-btn {
+  height: 52px; border-radius: 15px; font-size: 17px; font-weight: 600;
+  background: var(--surface); box-shadow: var(--card-shadow);
+}
+.rp-btn.solid { background: var(--brass); color: var(--on-brass); box-shadow: none; }
+.rp-btn:disabled { opacity: 0.6; }
+@media (prefers-reduced-motion: reduce) { .rp-sheet { animation: none; } }

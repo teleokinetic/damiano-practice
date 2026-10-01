@@ -11,6 +11,7 @@ const CRITICAL = [
   'app.js',
   'seed.js',
   'video.js',
+  'report.js',
   'manifest.webmanifest',
 ];
 const EXTRAS = [
