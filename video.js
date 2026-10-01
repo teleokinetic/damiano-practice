@@ -150,18 +150,24 @@ function viewVideo(key, dayId) {
       ${vidMsg ? `<div class="vid-msg">${esc(vidMsg)}</div>` : ''}
     </div>`;
 
-  if (videoIsSending(key) || r.status === 'received') return `
-    ${topbar(back)}
-    <div class="vid">
+  if (videoIsSending(key) || r.status === 'received') {
+    // While it's going up there is no way off this screen: one clear wait,
+    // then one clear "Sent". Only a lost connection or a failure lets him
+    // leave early, and the screen says it will finish on its own.
+    const phase = sendPhase(key);
+    const busy = phase === 'uploading' || phase === 'confirming';
+    const leave = phase === 'received'
+      ? `<a class="finishbtn solid ready" href="${back}">Back to ${dayId ? 'session' : 'home'}</a>`
+      : busy ? '' : `<a class="vidbtn vid-leave" href="${back}">Leave it for now</a>`;
+    return `
+    ${busy ? '<div class="topbar"></div>' : topbar(back)}
+    <div class="vid ${busy ? 'vid-busy' : ''}">
       <div class="vid-k">Video for Tanner</div>
       <div class="dayhead-name">${esc(lift.name)}</div>
       <div class="vid-done" data-upstatus="${key}">${uploadStatusHTML(key)}</div>
-      ${captureInputsHTML(key, dayId)}
-      <div class="vid-actions">
-        ${r.status === 'received' ? '<span></span>' : '<label for="vidcap" class="vidbtn">Replace</label>'}
-        <a class="finishbtn solid ready" href="${back}">Done</a>
-      </div>
+      ${leave}
     </div>`;
+  }
 
   return `
     ${topbar(back)}

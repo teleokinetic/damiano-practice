@@ -241,7 +241,8 @@ def t_bad_key(ctx, pg):
 
 
 def t_unconfigured(ctx, pg):
-    send_clip(pg, f'{SP}/clip.webm')   # no endpoint: the shipping config before setup
+    ctx.add_init_script("window.DAMIANO_TEST_DRIVE = { endpoint: '', key: '' };")
+    send_clip(pg, f'{SP}/clip.webm')   # no endpoint: as before setup
     pg.wait_for_timeout(800)
     txt = pg.inner_text('[data-upstatus="bench"]')
     check('not set up: says saved on this phone', 'Saved on this phone' in txt, txt.replace('\n', ' | '))
@@ -281,7 +282,45 @@ def t_big(ctx, pg):
           f'{len(chunks)} chunks in {time.time() - t0:.0f}s')
 
 
-TESTS = [('small', t_small), ('chunks', t_chunks), ('drop', t_drop), ('503', t_503), ('partial', t_partial),
+def t_stay(ctx, pg):
+    """While sending: no way off the screen. Then a clear Sent and a way back."""
+    ctx.add_init_script(drive_cfg(chunk=256 * 1024))
+    send_clip(pg, f'{SP}/clip20.mov')
+    pg.wait_for_selector('.vid-busy', timeout=5000)
+    check('stay: no Back link while sending', pg.query_selector('.backlink') is None)
+    check('stay: no leave or done buttons while sending', pg.query_selector('.vid-leave') is None and pg.query_selector('.vid a.finishbtn') is None)
+    check('stay: asks him to stay on this screen', 'Stay on this screen' in pg.inner_text('[data-upstatus="bench"]'))
+    check('stay: bug button hidden while sending', not pg.is_visible('#rp-fab'))
+    pg.screenshot(path=f'{SP}/stay-busy.png')
+    wait_received(pg)
+    pg.wait_for_selector('text=Back to session', timeout=5000)
+    check('stay: says Sent when done', 'Sent' in pg.inner_text('[data-upstatus="bench"]'))
+    check('stay: toast says Sent to Tanner', 'Sent to Tanner' in pg.inner_text('#toast'))
+    check('stay: Back link returns', pg.query_selector('.backlink') is not None)
+    pg.screenshot(path=f'{SP}/stay-sent.png')
+    verify_file('stay-on-screen flow', f'{SP}/clip20.mov')
+
+
+def t_stay_offline(ctx, pg):
+    """No connection: he isn't trapped; the screen says it keeps trying."""
+    ctx.add_init_script(drive_cfg(backoff=(0.5,)))
+    pg.goto(APP)
+    ctx.set_offline(True)
+    send_clip(pg, f'{SP}/clip.webm')
+    pg.wait_for_selector('text=Leave it for now', timeout=5000)
+    txt = pg.inner_text('[data-upstatus="bench"]')
+    check('offline: can leave, told it keeps trying', 'keeps trying' in txt, txt.replace('\n', ' | '))
+    pg.screenshot(path=f'{SP}/stay-offline.png')
+    pg.click('text=Leave it for now')
+    ctx.set_offline(False)
+    pg.evaluate("window.dispatchEvent(new Event('online'))")
+    wait_received(pg)
+    pg.wait_for_timeout(300)
+    check('offline: finished after leaving, toast shown elsewhere', 'Sent to Tanner' in pg.inner_text('#toast'))
+    verify_file('left while offline, sent later', f'{SP}/clip.webm')
+
+
+TESTS = [('stay', t_stay), ('stay_offline', t_stay_offline), ('small', t_small), ('chunks', t_chunks), ('drop', t_drop), ('503', t_503), ('partial', t_partial),
          ('expire', t_expire), ('hidden_range', t_hidden_range), ('hidden_range_drop', t_hidden_range_drop),
          ('reload', t_reload), ('offline', t_offline), ('script_down', t_script_down), ('bad_key', t_bad_key),
          ('unconfigured', t_unconfigured), ('in_session', t_in_session), ('big', t_big)]

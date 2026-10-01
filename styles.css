@@ -1199,3 +1199,9 @@ body.splashing .rp-fab { opacity: 0; }
 .up-meta { width: 100%; display: flex; justify-content: space-between; color: var(--dim); font-family: var(--num); font-size: 14px; font-variant-numeric: tabular-nums; }
 .up-retry { width: 100%; margin-top: 8px; }
 .up-done .ear-mini { width: 44px; height: 44px; color: var(--brass); }
+.vid-busy .vid-done { padding-top: 40px; }
+.vid-busy .vid-done-sub b { color: var(--ink); font-weight: 600; }
+.vid-leave { margin-top: 4px; }
+.up-done .vid-done-line { font-size: 30px; }
+body:has(.vid-busy) .rp-fab { display: none; }
+.vid > a.finishbtn { display: flex; align-items: center; justify-content: center; margin-top: 4px; }

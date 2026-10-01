@@ -31,8 +31,23 @@ function uploadsReady() { return !!driveCfg().endpoint; }
 // Live progress per request key, for the screens; persisted state lives in the clip record.
 const uploadLive = {};   // key → { phase, sent, total, error }
 function setLive(key, patch) {
+  const before = sendPhase(key);
   uploadLive[key] = Object.assign(uploadLive[key] || {}, patch);
-  paintUploadStatus(key);
+  // A new phase changes what he can do on the screen (stay / leave / back),
+  // so redraw that screen; progress alone just moves the bar.
+  const parts = (location.hash || '').replace(/^#\//, '').split('/');
+  if (parts[0] === 'video' && parts[1] === key && sendPhase(key) !== before) render();
+  else paintUploadStatus(key);
+}
+
+// One word for where a sent clip stands, for the screen to act on.
+function sendPhase(key) {
+  const req = videoReq(key) || {};
+  const live = uploadLive[key] || {};
+  if (req.status === 'received' || live.phase === 'received') return 'received';
+  if (!uploadsReady() || live.phase === 'held') return 'held';
+  if (live.phase === 'failed' || live.phase === 'waiting' || live.phase === 'confirming') return live.phase;
+  return 'uploading';
 }
 
 /* ---- clip store ---- */
@@ -245,6 +260,7 @@ async function uploadOne(rec) {
     save();
   }
   setLive(key, { phase: 'received', error: '' });
+  toast('Sent to Tanner');
   refreshVideoMarks(key);
 }
 
@@ -325,8 +341,8 @@ function uploadStatusHTML(key) {
   if (req.status === 'received' || live.phase === 'received') {
     return `<div class="up up-done">
       <span class="vid-done-mark">${earMini()}</span>
-      <div class="vid-done-line">Tanner has it</div>
-      <div class="vid-done-sub">Saved to his Google Drive.</div></div>`;
+      <div class="vid-done-line">Sent</div>
+      <div class="vid-done-sub">Tanner has it.</div></div>`;
   }
   if (!uploadsReady() || live.phase === 'held') {
     return `<div class="up">
@@ -348,7 +364,7 @@ function uploadStatusHTML(key) {
     <div class="vid-done-line">${waiting ? 'Waiting for a connection' : confirming ? 'Almost there' : 'Sending to Tanner'}</div>
     <div class="up-bar"><i style="width:${confirming ? 100 : pct}%"></i></div>
     <div class="up-meta"><span>${confirming ? 'Checking it arrived' : `${pct}%`}</span><span>${total ? `${fmtMB(sent)} of ${fmtMB(total)} MB` : ''}</span></div>
-    <div class="vid-done-sub">${waiting ? 'It picks up where it stopped on its own.' : 'Keep the app open until it finishes.'}</div></div>`;
+    <div class="vid-done-sub">${waiting ? 'No connection right now. It keeps trying and picks up where it stopped, even if you leave this screen.' : '<b>Stay on this screen</b> until it says Sent.'}</div></div>`;
 }
 
 function paintUploadStatus(key) {
