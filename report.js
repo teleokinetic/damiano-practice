@@ -115,7 +115,7 @@ function mountReport() {
   const fab = document.createElement('button');
   fab.id = 'rp-fab';
   fab.className = 'rp-fab';
-  fab.setAttribute('aria-label', 'Report a problem');
+  fab.setAttribute('aria-label', 'Report a bug');
   fab.setAttribute('aria-haspopup', 'dialog');
   fab.innerHTML = `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -130,10 +130,10 @@ function mountReport() {
   sheet.setAttribute('aria-labelledby', 'rp-title');
   sheet.innerHTML = `
     <div class="rp-head">
-      <div id="rp-title" class="rp-title">Something off?</div>
+      <div id="rp-title" class="rp-title">Did you find a bug?</div>
       <div class="rp-where" data-rpwhere></div>
     </div>
-    <textarea id="rp-text" rows="4" placeholder="What happened? A few words is plenty."></textarea>
+    <textarea id="rp-text" rows="4" placeholder="Tell me about it and I’ll get it fixed ASAP."></textarea>
     <div class="rp-status" data-rpstatus aria-live="polite"></div>
     <div class="rp-actions">
       <button class="rp-btn" data-rp="cancel">Cancel</button>
