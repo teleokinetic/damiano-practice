@@ -4,7 +4,7 @@ Damiano's strength sessions with Tanner. Built on the Strength Rebuild app's lay
 
 ## What's in v1.0 (demo, Oct 1 2026)
 
-- **Home**: greeting, *Up next* (the session trained least recently; any can be opened), the other two sessions, this week. A camera line names any lift Tanner has asked to see in that session.
+- **Home**: greeting, *Up next* (the session trained least recently; any can be opened), and the other two sessions. A camera line names any lift Tanner has asked to see in that session.
 - **Sessions A / B / C**: provisional plan, working sets only, in order, with pairings grouped on one mat and their own rests (B finish 1:00, C main 1:15, C finish 1:00). Pull-ups unpaired 3:00, main lifts 2:00, unpaired accessories 1:30. Accessories carry *cut first / cut next*.
 - **Logging**: per exercise, load (lb), reps and RIR (default 2) in the drawer. Each tap of the ring banks one set with those three numbers, so every working set is recorded. The warm-up is its own row and is never counted. Finish records each exercise as done, partial (n of m sets) or skipped.
 - **Video requests**: a request belongs to the lift. A camera chip sits on that lift's row (outside the drawer) wherever it comes up next. The chip opens the framing reference (credited), records with the phone camera or picks an existing clip, then plays it back with draggable trim marks and load, reps, rest and reps-left fields. Retake keeps the current draft until a new clip arrives, and cancelling a retake changes nothing. Send keeps the clip on the phone (IndexedDB) and marks it **saved**, not received.
@@ -16,6 +16,7 @@ Damiano's strength sessions with Tanner. Built on the Strength Rebuild app's lay
 - **Messages**: a two-way thread ("Send me a message"), unread dot on both sides, no email notifications.
 - **Coach view**: Damiano's logs, messages and clips, clip download, and requesting a new recording.
 - **Progress tracker**: Tanner still needs to design and build it. History is saved in every session record (`setLog`, `status`, `rir`) so the tracker has data from day one.
+- **Week calendar**: hidden until its design is production-ready.
 - **Running**: hidden until defined.
 - **Resources**: hidden until there's something in it.
 - The framing images are hotlinked from their sources and should move into `images/` once copied over.

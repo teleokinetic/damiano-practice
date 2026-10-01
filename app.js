@@ -1236,13 +1236,14 @@ function dayStatusHTML(day) {
   if (last && startOfDay(sessionTs(last)) === startOfDay(Date.now())) {
     return `<span class="day-done">${earMini()}Done today</span>`;
   }
-  return `<span>${last ? esc(cap(relPhrase(sessionTs(last)))) : 'Not yet'}</span>`;
+  return last ? `<span>${esc(cap(relPhrase(sessionTs(last))))}</span>` : '';
 }
 
 function viewHome() {
   const next = suggestedDay();
   const st = rhythmStats();
-  if (!next) return `${topbar()}${greetingHTML()}${weekStripHTML(st)}`;
+  // The week strip waits for a production-ready design.
+  if (!next) return `${topbar()}${greetingHTML()}`;
   const live = !!(state.active && state.active.dayId === next.id);
   const mins = typicalMinutes(next.id);
   const last = lastSessionFor(next.id);
@@ -1267,8 +1268,7 @@ function viewHome() {
       ${dayVideoTagHTML(next)}
       <span class="upnext-go">${live ? 'Pick up where you left off' : `Start ${esc(next.name)}`}${icon('chev', 2.4)}</span>
     </a>
-    ${others ? `<div class="group dayrows">${others}</div>` : ''}
-    ${weekStripHTML(st)}`;
+    ${others ? `<div class="group dayrows">${others}</div>` : ''}`;
 }
 
 /* ---- this week ---- */
