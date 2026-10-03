@@ -1211,3 +1211,110 @@ body.splashing .rp-fab { opacity: 0; }
 .up-done .vid-done-line { font-size: 30px; }
 body:has(.vid-busy) .rp-fab { display: none; }
 .vid > a.finishbtn { display: flex; align-items: center; justify-content: center; margin-top: 4px; }
+
+/* ---------- home: three doors ----------
+   Strength is the big card (opens the Strength page); the Daily Movement
+   Phrase and Running + meditation are two cards beneath it. One screen. */
+
+.strength-door { position: relative; overflow: hidden; padding-top: 18px; }
+.strength-door .door-orn {
+  position: absolute; right: 10px; top: 8px; width: 58px; height: 86px;
+  color: var(--brass); opacity: 0.3;
+}
+.door-k {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 14.5px; font-weight: 600; color: var(--brass-ink);
+}
+.door-k b {
+  font-family: var(--num); font-weight: 600; font-size: 19px; line-height: 1;
+  background: var(--brass-wash); border-radius: 7px; padding: 3px 7px;
+}
+.door-title { font-size: 44px; font-weight: 700; letter-spacing: -0.032em; line-height: 1.05; margin-top: 10px; }
+.strength-door .upnext-go { margin-top: 18px; }
+
+.door {
+  display: flex; align-items: center; gap: 14px; min-height: 84px; margin-top: 10px;
+  padding: 12px 14px 12px 12px;
+  background: var(--surface); box-shadow: var(--card-shadow); border-radius: var(--r-card);
+  transition: transform 0.16s var(--ease);
+}
+.strength-door + .door { margin-top: 12px; }
+.door:active { transform: scale(0.982); }
+.door-tile { width: 60px; height: 60px; flex: none; border-radius: 14px; display: grid; place-items: center; }
+.door-tile.phrase { background: #000; color: #fff; }
+.door-tile.phrase svg { width: 18px; height: 18px; }
+.door-tile.run { background: var(--fill-2); color: var(--dim); }
+.door-tile.run .ico { width: 28px; height: 28px; }
+@supports (background: color-mix(in srgb, red 10%, transparent)) {
+  .door-tile.run { background: color-mix(in srgb, var(--dim) 16%, transparent); }
+}
+.door-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.door-name { font-size: 18px; font-weight: 650; letter-spacing: -0.014em; line-height: 1.2; }
+.door-done { font-size: 14px; font-weight: 600; color: var(--brass-ink); }
+.door-arrow {
+  width: 32px; height: 32px; flex: none; border-radius: 50%;
+  display: grid; place-items: center; background: var(--fill); color: var(--dim);
+}
+.door-arrow .ico { width: 15px; height: 15px; }
+
+/* ---------- strength, phrase, running pages ---------- */
+
+#app[data-view="strength"] .dayhead,
+#app[data-view="run"] .dayhead { margin: 0 0 14px; }
+
+/* The phrase page fills the screen: video and its one line centred, Done at the foot. */
+#app[data-view="phrase"] {
+  min-height: 100dvh; display: flex; flex-direction: column;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+}
+#app[data-view="phrase"] ~ .rp-fab { display: none; }
+.phrase-page { flex: 1; display: flex; flex-direction: column; }
+.phrase-stage { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 22px; padding: 18px 0; }
+.phrase-player { position: relative; }
+.phrase-player video { aspect-ratio: 16 / 9; object-fit: contain; }
+.phrase-fs {
+  position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%;
+  display: grid; place-items: center; background: rgba(0, 0, 0, 0.45); color: #fff;
+  transition: transform 0.16s var(--ease);
+}
+.phrase-fs:active { transform: scale(0.92); }
+.phrase-fs .ico { width: 18px; height: 18px; }
+.phrase-guide { font-size: 17px; line-height: 1.45; color: var(--ink); padding: 0 2px; }
+.phrase-done { margin-top: 0; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.phrase-done.is-done { color: var(--brass-ink); }
+
+/* The awareness recording: coral play, title, a draggable scrub bar. */
+.audio-card {
+  display: grid; gap: 14px; padding: 16px;
+  background: var(--surface); box-shadow: var(--card-shadow); border-radius: var(--r-card);
+}
+.audio-top { display: flex; align-items: center; gap: 14px; }
+.audio-play {
+  width: 56px; height: 56px; flex: none; border-radius: 50%;
+  display: grid; place-items: center; background: var(--brass); color: var(--on-brass);
+  transition: transform 0.16s var(--ease);
+}
+.audio-play:active { transform: scale(0.92); }
+.audio-play svg { width: 22px; height: 22px; }
+.audio-name { flex: 1; min-width: 0; font-size: 20px; font-weight: 650; letter-spacing: -0.015em; line-height: 1.2; }
+/* A tall invisible hit area around a thin track, so a thumb can grab it. */
+.scrub {
+  position: relative; height: 36px; margin: 2px 0 0; touch-action: none; cursor: pointer;
+  outline: none;
+}
+.scrub::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 15px; height: 6px;
+  border-radius: 3px; background: var(--fill-2);
+}
+.scrub-fill { position: absolute; left: 0; top: 15px; height: 6px; width: 0; border-radius: 3px; background: var(--brass); }
+.scrub-knob {
+  position: absolute; top: 18px; left: 0; width: 24px; height: 24px; margin: -12px 0 0 -12px;
+  border-radius: 50%; background: var(--ink); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  transition: transform 0.16s var(--ease);
+}
+.scrub.dragging .scrub-knob, .scrub:focus-visible .scrub-knob { transform: scale(1.18); }
+.scrub-times {
+  display: flex; justify-content: space-between; margin-top: 2px;
+  font-family: var(--num); font-weight: 500; font-size: 16px; color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}

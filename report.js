@@ -35,6 +35,12 @@ function reportWhere() {
     } else if (parts[0] === 'video') {
       const lift = VIDEO_LIFTS[parts[1]];
       where = 'Video · ' + (lift ? lift.name : parts[1]);
+    } else if (parts[0] === 'strength') {
+      where = 'Strength';
+    } else if (parts[0] === 'phrase') {
+      where = 'Daily Movement Phrase';
+    } else if (parts[0] === 'run') {
+      where = 'Running + meditation';
     } else if (parts[0] === 'settings' || parts[0] === 'import') {
       where = 'Settings';
     }

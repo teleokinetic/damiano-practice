@@ -4,7 +4,10 @@ Damiano's practice with Tanner: strength sessions now, with room for running and
 
 ## What's in v1.0 (demo, Oct 1 2026)
 
-- **Home**: greeting, *Up next* (the session trained least recently; any can be opened), and the other two sessions. A camera line names any lift Tanner has asked to see in that session.
+- **Home**: greeting and three doors. **Strength** (Up next letter, *Start Strength*) opens the Strength page, never the session. **Daily Movement Phrase** opens the phrase page; *Done today* shows when he's marked it (clears the next day). **Running + meditation** opens the awareness audio.
+- **Strength page** (`#/strength`): what Home used to be — *Up next* (the session trained least recently; any can be opened), the other two sessions, and a camera line naming any lift Tanner has asked to see. Day screens' Back returns here.
+- **Daily Movement Phrase** (`#/phrase`): the clip (`media/daily-phrase.mp4`, muted, labels burned in), one guidance line, *Done for today*. No bug button on this page.
+- **Running + meditation** (`#/run`): *Attuning to Spaciousness While Moving* (`media/…m4a`, ends with a bell). Draggable scrub bar; lock-screen controls via Media Session; keeps playing while he moves around the app. Media is never precached; the service worker leaves `media/` to the network.
 - **Sessions A / B / C**: provisional plan, working sets only, in order, with pairings grouped on one mat and their own rests (B finish 1:00, C main 1:15, C finish 1:00). Pull-ups unpaired 3:00, main lifts 2:00, unpaired accessories 1:30. Accessories carry *cut first / cut next*.
 - **Logging**: per exercise, load (lb), reps and RIR (default 2) in the drawer. Each tap of the ring banks one set with those three numbers, so every working set is recorded. The warm-up is its own row and is never counted. Finish records each exercise as done, partial (n of m sets) or skipped.
 - **Video requests**: a request belongs to the lift. A camera chip sits on that lift's row (outside the drawer) wherever it comes up next. The chip opens the framing reference (credited), records with the phone camera or picks an existing clip, then plays it back with draggable trim marks and load, reps, rest and reps-left fields. Retake keeps the current draft until a new clip arrives, and cancelling a retake changes nothing. Send keeps the clip on the phone (IndexedDB) and uploads it to Tanner's Google Drive (`upload.js`, `apps-script/`): 8 MB resumable chunks straight to Drive, resuming after dropped connections, a locked phone or a closed app. The request only counts as received once Drive has every byte and the script has checked the size; then the phone copy is freed.
@@ -18,7 +21,7 @@ Damiano's practice with Tanner: strength sessions now, with room for running and
 - **Coach view**: Damiano's logs, messages and clips, clip download, and requesting a new recording.
 - **Progress tracker**: Tanner still needs to design and build it. History is saved in every session record (`setLog`, `status`, `rir`) so the tracker has data from day one.
 - **Week calendar**: hidden until its design is production-ready.
-- **Running**: hidden until defined.
+- **Running**: beyond the awareness audio, still to be defined.
 - **Resources**: hidden until there's something in it.
 - The framing images are hotlinked from their sources and should move into `images/` once copied over.
 

@@ -10,7 +10,7 @@
 
 const STORE_KEY = 'damiano-state-v1';
 const V1_KEY = 'damiano-no-v1';        // read-only: migration source, never written
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.0';
 
 let state = null;
 
@@ -1193,6 +1193,8 @@ const ICON_PATHS = {
   up: '<path d="M12 19V5M6 11l6-6 6 6"/>',
   dn: '<path d="M12 5v14M6 13l6 6 6-6"/>',
   camera: '<path d="M3.5 8.5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2z"/><path d="M15.5 10.5l5-3v9l-5-3"/>',
+  phones: '<path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3.5" y="14" width="4" height="6" rx="1.5"/><rect x="16.5" y="14" width="4" height="6" rx="1.5"/>',
+  expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
   rec: '<circle cx="12" cy="12" r="6.5" fill="currentColor" stroke="none"/>',
 };
 function icon(name, sw) {
@@ -1200,9 +1202,9 @@ function icon(name, sw) {
     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name]}</svg>`;
 }
 
-function topbar(backTo) {
+function topbar(backTo, backLabel) {
   const left = backTo
-    ? `<a class="backlink" href="${backTo}">${icon('back', 2.4)}Back</a>`
+    ? `<a class="backlink" href="${backTo}">${icon('back', 2.4)}${esc(backLabel || 'Back')}</a>`
     : `<div class="wordmark">Damiano’s <span class="half">Practice</span></div>`;
   const right = backTo ? '' : `<a class="gear" href="#/settings" aria-label="Settings">${icon('gear', 1.8)}</a>`;
   return `<div class="topbar ${backTo ? '' : 'home'}">${left}${right}</div>`;
@@ -1265,11 +1267,52 @@ function dayStatusHTML(day) {
   return last ? `<span>${esc(cap(relPhrase(sessionTs(last))))}</span>` : '';
 }
 
+/* Home: three doors under the greeting. Strength is the main one; the
+   Daily Movement Phrase and Running + meditation sit as two cards below.
+   Each door opens its own page; the Strength card opens the Strength page,
+   never the session itself. Sized to fit one screen. */
+
+// The phrase's one stored fact: the local date it was last marked done.
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function phraseDoneToday() { return state.phraseDone === todayKey(); }
+
 function viewHome() {
   const next = suggestedDay();
-  const st = rhythmStats();
-  // The week strip waits for a production-ready design.
-  if (!next) return `${topbar()}${greetingHTML()}`;
+  const live = !!(next && state.active && state.active.dayId === next.id);
+  const arrow = `<span class="door-arrow">${icon('chev', 2.5)}</span>`;
+  const strength = next ? `
+    <a class="upnext strength-door" href="#/strength">
+      ${barleySVG('barley door-orn')}
+      <span class="door-k">${live ? 'In progress' : 'Up next'} <b>${esc(dayLetter(next))}</b></span>
+      <span class="door-title">Strength</span>
+      <span class="upnext-go">Start Strength${icon('chev', 2.4)}</span>
+    </a>` : '';
+  return `
+    ${topbar()}
+    ${greetingHTML()}
+    ${strength}
+    <a class="door" href="#/phrase">
+      <span class="door-tile phrase"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></span>
+      <span class="door-body"><span class="door-name">Daily Movement Phrase</span>${phraseDoneToday() ? '<span class="door-done">Done today</span>' : ''}</span>
+      ${arrow}
+    </a>
+    <a class="door" href="#/run">
+      <span class="door-tile run">${icon('phones', 1.7)}</span>
+      <span class="door-body"><span class="door-name">Running + meditation</span></span>
+      ${arrow}
+    </a>`;
+}
+
+/* ---- strength ----
+   What Home used to be, one level in: Up next for the day he's on, the
+   other days as rows. */
+function viewStrength() {
+  const next = suggestedDay();
+  const head = `${topbar('#/', 'Home')}<div class="dayhead"><div class="dayhead-name">Strength</div></div>`;
+  if (!next) return head;
   const live = !!(state.active && state.active.dayId === next.id);
   const mins = typicalMinutes(next.id);
   const last = lastSessionFor(next.id);
@@ -1283,8 +1326,7 @@ function viewHome() {
       <span class="dr-when">${dayVideoDotHTML(d)}${dayStatusHTML(d)}</span>${icon('chev', 2.2)}
     </a>`).join('');
   return `
-    ${topbar()}
-    ${greetingHTML()}
+    ${head}
     <a class="upnext" href="#/day/${next.id}">
       <span class="upnext-top">${dayMarkHTML(next, 'lg')}
         <span class="upnext-k ${live ? 'live' : ''}">${live ? 'In progress' : 'Up next'}</span></span>
@@ -1295,6 +1337,202 @@ function viewHome() {
       <span class="upnext-go">${live ? 'Pick up where you left off' : `Start ${esc(next.name)}`}${icon('chev', 2.4)}</span>
     </a>
     ${others ? `<div class="group dayrows">${others}</div>` : ''}`;
+}
+
+/* ---- daily movement phrase ----
+   A focused page: the clip, one line, Done. The movements are named in
+   the video itself, so the page doesn't name them. No bug button here. */
+
+const PHRASE_VIDEO = 'media/daily-phrase.mp4';
+const PHRASE_POSTER = 'media/daily-phrase-poster.jpg';
+
+function viewPhrase() {
+  const done = phraseDoneToday();
+  return `
+    ${topbar('#/', 'Home')}
+    <div class="dayhead"><div class="dayhead-name">Daily Movement Phrase</div></div>
+    <div class="phrase-page">
+      <div class="phrase-stage">
+        <div class="vid-player phrase-player">
+          <video id="phrasevid" src="${PHRASE_VIDEO}" poster="${PHRASE_POSTER}" muted playsinline loop controls preload="metadata"></video>
+          <button class="phrase-fs" data-action="phrase-fs" aria-label="Full screen">${icon('expand', 2.2)}</button>
+        </div>
+        <p class="phrase-guide">First get familiar with the movements. Do a few rounds with the video, then try doing it without.</p>
+      </div>
+      <button class="finishbtn phrase-done ${done ? 'is-done' : ''}" data-action="phrase-done">${done ? `${earMini()}Done today` : 'Done for today'}</button>
+    </div>`;
+}
+
+function phraseFullscreen() {
+  const v = $('#phrasevid');
+  if (!v) return;
+  if (v.paused) v.play().catch(() => {});
+  // iPhone only lets the video element itself go full screen.
+  if (v.webkitEnterFullscreen) { try { v.webkitEnterFullscreen(); return; } catch (e) {} }
+  const box = v.closest('.phrase-player') || v;
+  const go = box.requestFullscreen || box.webkitRequestFullscreen;
+  if (go) go.call(box);
+}
+
+/* ---- running + meditation ----
+   One awareness recording for now. The <audio> lives outside #app, so it
+   keeps playing while he moves around the app, and the lock screen gets
+   title, play/pause and scrubbing through Media Session. */
+
+const RUN_AUDIO = {
+  src: 'media/attuning-to-spaciousness-while-moving.m4a',
+  title: 'Attuning to Spaciousness While Moving',
+};
+let runAudio = null;
+
+function getRunAudio() {
+  if (runAudio) return runAudio;
+  const a = document.createElement('audio');
+  a.id = 'runaudio';
+  a.preload = 'metadata';
+  a.src = RUN_AUDIO.src;
+  a.setAttribute('playsinline', '');
+  document.body.appendChild(a);
+  // Safari 17+: treat this as playback (keeps going in the background,
+  // ignores the silent switch).
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  ['play', 'pause', 'timeupdate', 'loadedmetadata', 'durationchange', 'ended', 'seeked'].forEach((ev) =>
+    a.addEventListener(ev, syncRunUI));
+  a.addEventListener('ended', () => { a.currentTime = 0; syncRunUI(); });
+  if ('mediaSession' in navigator) {
+    const ms = navigator.mediaSession;
+    const set = (k, fn) => { try { ms.setActionHandler(k, fn); } catch (e) {} };
+    set('play', () => a.play());
+    set('pause', () => a.pause());
+    set('seekto', (d) => {
+      if (d.fastSeek && 'fastSeek' in a) a.fastSeek(d.seekTime); else a.currentTime = d.seekTime;
+      syncRunUI();
+    });
+    set('seekbackward', (d) => { a.currentTime = Math.max(0, a.currentTime - (d.seekOffset || 15)); syncRunUI(); });
+    set('seekforward', (d) => { a.currentTime = Math.min(a.duration || 0, a.currentTime + (d.seekOffset || 15)); syncRunUI(); });
+  }
+  runAudio = a;
+  return a;
+}
+
+function runMediaMeta() {
+  if (!('mediaSession' in navigator) || typeof MediaMetadata === 'undefined') return;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: RUN_AUDIO.title,
+    artist: 'Tanner Holman',
+    album: 'Damiano’s Practice',
+    artwork: [
+      { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+      { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+  });
+}
+
+let runScrubbing = false;
+function syncRunUI() {
+  const a = runAudio;
+  if (!a) return;
+  const dur = Number.isFinite(a.duration) ? a.duration : 0;
+  const t = Math.min(a.currentTime || 0, dur || Infinity);
+  if ('mediaSession' in navigator) {
+    try { navigator.mediaSession.playbackState = a.paused ? 'paused' : 'playing'; } catch (e) {}
+    if (dur && navigator.mediaSession.setPositionState) {
+      try { navigator.mediaSession.setPositionState({ duration: dur, position: t, playbackRate: a.playbackRate || 1 }); } catch (e) {}
+    }
+  }
+  const box = $('.audio-card');
+  if (!box) return;
+  const btn = box.querySelector('[data-action="run-play"]');
+  btn.innerHTML = a.paused ? PLAY_GLYPH : PAUSE_GLYPH;
+  btn.setAttribute('aria-label', a.paused ? 'Play' : 'Pause');
+  if (!runScrubbing) setRunPos(dur ? t / dur : 0, t, dur);
+}
+
+function setRunPos(frac, t, dur) {
+  const box = $('.audio-card');
+  if (!box) return;
+  const pct = (Math.max(0, Math.min(1, frac)) * 100).toFixed(2) + '%';
+  box.querySelector('.scrub-fill').style.width = pct;
+  box.querySelector('.scrub-knob').style.left = pct;
+  const track = box.querySelector('.scrub');
+  track.setAttribute('aria-valuenow', String(Math.round(t)));
+  track.setAttribute('aria-valuemax', String(Math.round(dur)));
+  track.setAttribute('aria-valuetext', `${fmtClock(t)} of ${fmtClock(dur)}`);
+  box.querySelector('[data-t="el"]').textContent = fmtClock(t);
+  box.querySelector('[data-t="left"]').textContent = '−' + fmtClock(Math.max(0, dur - t));
+}
+
+const PLAY_GLYPH = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>';
+const PAUSE_GLYPH = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2"/><rect x="13.5" y="5.5" width="4" height="13" rx="1.2"/></svg>';
+
+function viewRun() {
+  const a = getRunAudio();
+  return `
+    ${topbar('#/', 'Home')}
+    <div class="dayhead"><div class="dayhead-name">Running + meditation</div></div>
+    <div class="audio-card">
+      <div class="audio-top">
+        <button class="audio-play" data-action="run-play" aria-label="${a.paused ? 'Play' : 'Pause'}">${a.paused ? PLAY_GLYPH : PAUSE_GLYPH}</button>
+        <div class="audio-name">${esc(RUN_AUDIO.title)}</div>
+      </div>
+      <div>
+        <div class="scrub" role="slider" tabindex="0" aria-label="Position" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+          <span class="scrub-fill"></span><span class="scrub-knob"></span>
+        </div>
+        <div class="scrub-times"><span data-t="el">0:00</span><span data-t="left">−0:00</span></div>
+      </div>
+    </div>`;
+}
+
+function wireRunView() {
+  const a = getRunAudio();
+  const track = $('.scrub');
+  if (!track) return;
+  const fracAt = (x) => {
+    const r = track.getBoundingClientRect();
+    return Math.max(0, Math.min(1, (x - r.left) / r.width));
+  };
+  const preview = (x) => {
+    const dur = Number.isFinite(a.duration) ? a.duration : 0;
+    const f = fracAt(x);
+    setRunPos(f, f * dur, dur);
+    return f * dur;
+  };
+  let target = null;
+  track.addEventListener('pointerdown', (e) => {
+    if (!Number.isFinite(a.duration)) return;
+    runScrubbing = true;
+    track.classList.add('dragging');
+    try { track.setPointerCapture(e.pointerId); } catch (err) {}
+    target = preview(e.clientX);
+    e.preventDefault();
+  });
+  track.addEventListener('pointermove', (e) => { if (runScrubbing) target = preview(e.clientX); });
+  const end = () => {
+    if (!runScrubbing) return;
+    runScrubbing = false;
+    track.classList.remove('dragging');
+    if (target != null) a.currentTime = target;
+    target = null;
+    syncRunUI();
+  };
+  track.addEventListener('pointerup', end);
+  track.addEventListener('pointercancel', end);
+  track.addEventListener('keydown', (e) => {
+    const step = { ArrowLeft: -15, ArrowDown: -15, ArrowRight: 15, ArrowUp: 15 }[e.key];
+    if (step == null || !Number.isFinite(a.duration)) return;
+    e.preventDefault();
+    a.currentTime = Math.max(0, Math.min(a.duration, a.currentTime + step));
+    syncRunUI();
+  });
+  syncRunUI();
+}
+
+// A recording or the phrase video playing: never reload the page under it.
+function mediaPlaying() {
+  if (runAudio && !runAudio.paused) return true;
+  const v = $('#phrasevid');
+  return !!(v && !v.paused);
 }
 
 /* ---- this week ---- */
@@ -1901,7 +2139,7 @@ function viewDay(dayId) {
   const a = state.active && state.active.dayId === dayId ? state.active : null;
   const allDone = !!a && day.slots.every((s) => a.entries[s.id] && a.entries[s.id].done);
   return `
-    ${topbar('#/')}
+    ${topbar('#/strength')}
     <div class="dayhead">
       <div class="dayhead-name">${esc(day.name)}</div>
       <div class="dayhead-sub">${esc(day.subtitle)}</div>
@@ -2132,12 +2370,16 @@ function render() {
   else if (parts[0] === 'video' && parts[1]) html = viewVideo(parts[1], parts[2]);
   else if (parts[0] === 'settings') html = viewSettings();
   else if (parts[0] === 'import') html = viewImport();
+  else if (parts[0] === 'strength') html = viewStrength();
+  else if (parts[0] === 'phrase') html = viewPhrase();
+  else if (parts[0] === 'run') html = viewRun();
   else html = viewHome();
   const app = $('#app');
   app.setAttribute('data-view', parts[0] || 'home');
   app.innerHTML = html;
   window.scrollTo(0, 0);
   if (parts[0] === 'video') wireVideoView();
+  if (parts[0] === 'run') wireRunView();
 }
 
 window.addEventListener('hashchange', render);
@@ -2166,6 +2408,22 @@ document.addEventListener('click', (ev) => {
   if (!t) return;
   const action = t.getAttribute('data-action');
   const dayId = currentDayId();
+
+  if (action === 'phrase-fs') { phraseFullscreen(); return; }
+  if (action === 'phrase-done') {
+    const v = $('#phrasevid');
+    if (v) v.pause();
+    if (!phraseDoneToday()) { state.phraseDone = todayKey(); save(); toast('Done for today'); }
+    location.hash = '#/';
+    return;
+  }
+  if (action === 'run-play') {
+    const a = getRunAudio();
+    if (a.paused) { runMediaMeta(); a.play().catch(() => toast('Couldn’t start the audio — try again')); }
+    else a.pause();
+    syncRunUI();
+    return;
+  }
 
   if (action === 'rest') { restStart(t.getAttribute('data-tier'), null); return; }
   if (action === 'rest-restart') { restStart(rest.tier || 'normal', rest.label); return; }
@@ -2586,7 +2844,7 @@ if ('serviceWorker' in navigator) {
     // Never pull the page out from under him: a running rest, the save
     // screen (its note isn't stored until Save), or a field being typed in.
     const typing = document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName);
-    if (rest.running || /^#\/finish\//.test(location.hash) || typing) {
+    if (rest.running || /^#\/finish\//.test(location.hash) || typing || mediaPlaying()) {
       toast('Update ready — lands on next open');
       return;
     }
