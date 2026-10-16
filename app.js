@@ -10,7 +10,7 @@
 
 const STORE_KEY = 'damiano-state-v1';
 const V1_KEY = 'damiano-no-v1';        // read-only: migration source, never written
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.7.0';
 
 let state = null;
 
@@ -1193,6 +1193,7 @@ const ICON_PATHS = {
   up: '<path d="M12 19V5M6 11l6-6 6 6"/>',
   dn: '<path d="M12 5v14M6 13l6 6 6-6"/>',
   camera: '<path d="M3.5 8.5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2z"/><path d="M15.5 10.5l5-3v9l-5-3"/>',
+  lying: '<circle cx="4.5" cy="15.2" r="1.9"/><path d="M7 16.2l6.2.3 3.3-6 3.3 6.9"/><path d="M2 19.5h20"/>',
   phones: '<path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3.5" y="14" width="4" height="6" rx="1.5"/><rect x="16.5" y="14" width="4" height="6" rx="1.5"/>',
   expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
   rec: '<circle cx="12" cy="12" r="6.5" fill="currentColor" stroke="none"/>',
@@ -1303,6 +1304,11 @@ function viewHome() {
       <span class="door-tile run">${icon('phones', 1.7)}</span>
       <span class="door-body"><span class="door-name">Running + meditation</span></span>
       ${arrow}
+    </a>
+    <a class="door" href="#/lesson">
+      <span class="door-tile lesson">${icon('lying', 1.7)}</span>
+      <span class="door-body"><span class="door-name">Everything Communicates</span><span class="door-sub">Floor Lesson · 28 min</span></span>
+      ${arrow}
     </a>`;
 }
 
@@ -1374,23 +1380,48 @@ function phraseFullscreen() {
   if (go) go.call(box);
 }
 
-/* ---- running + meditation ----
-   One awareness recording for now. The <audio> lives outside #app, so it
-   keeps playing while he moves around the app, and the lock screen gets
-   title, play/pause and scrubbing through Media Session. */
+/* ---- running + meditation, and the floor lesson ----
+   Two recordings share one <audio>. It lives outside #app, so it keeps
+   playing while he moves around the app, and the lock screen gets title,
+   play/pause and scrubbing through Media Session. Each page's card names
+   its own track; opening a page loads that track unless the other one is
+   playing, and each track's place is kept when the other is loaded. */
 
-const RUN_AUDIO = {
-  src: 'media/attuning-to-spaciousness-while-moving.m4a',
-  title: 'Attuning to Spaciousness While Moving',
+const AUDIO_TRACKS = {
+  run: {
+    src: 'media/attuning-to-spaciousness-while-moving.m4a',
+    title: 'Attuning to Spaciousness While Moving',
+    dur: 847,
+  },
+  lesson: {
+    src: 'media/when-one-part-moves.m4a',
+    title: 'When One Part Moves, the Whole Body Responds',
+    dur: 1717,
+  },
 };
 let runAudio = null;
+let runTrack = 'run';          // the track loaded in the <audio>
+const trackPos = {};           // where he left each track that isn't loaded
+
+// Load a track (pausing the other one, and remembering where it was).
+function useTrack(key) {
+  const a = getRunAudio();
+  if (runTrack === key) return a;
+  if (!a.paused) a.pause();
+  trackPos[runTrack] = a.currentTime || 0;
+  runTrack = key;
+  a.src = AUDIO_TRACKS[key].src;
+  const back = trackPos[key];
+  if (back) a.addEventListener('loadedmetadata', () => { try { a.currentTime = back; } catch (e) {} }, { once: true });
+  return a;
+}
 
 function getRunAudio() {
   if (runAudio) return runAudio;
   const a = document.createElement('audio');
   a.id = 'runaudio';
   a.preload = 'metadata';
-  a.src = RUN_AUDIO.src;
+  a.src = AUDIO_TRACKS[runTrack].src;
   a.setAttribute('playsinline', '');
   document.body.appendChild(a);
   // Safari 17+: treat this as playback (keeps going in the background,
@@ -1418,7 +1449,7 @@ function getRunAudio() {
 function runMediaMeta() {
   if (!('mediaSession' in navigator) || typeof MediaMetadata === 'undefined') return;
   navigator.mediaSession.metadata = new MediaMetadata({
-    title: RUN_AUDIO.title,
+    title: AUDIO_TRACKS[runTrack].title,
     artist: 'Tanner Holman',
     album: 'Damiano’s Practice',
     artwork: [
@@ -1442,10 +1473,21 @@ function syncRunUI() {
   }
   const box = $('.audio-card');
   if (!box) return;
+  const key = box.getAttribute('data-track') || 'run';
   const btn = box.querySelector('[data-action="run-play"]');
+  // The other track is playing: this card waits, paused, at its own place.
+  if (key !== runTrack) {
+    const d = AUDIO_TRACKS[key].dur || 0;
+    const p = Math.min(trackPos[key] || 0, d);
+    btn.innerHTML = PLAY_GLYPH;
+    btn.setAttribute('aria-label', 'Play');
+    setRunPos(d ? p / d : 0, p, d);
+    return;
+  }
   btn.innerHTML = a.paused ? PLAY_GLYPH : PAUSE_GLYPH;
   btn.setAttribute('aria-label', a.paused ? 'Play' : 'Pause');
-  if (!runScrubbing) setRunPos(dur ? t / dur : 0, t, dur);
+  const shown = dur || AUDIO_TRACKS[key].dur || 0;
+  if (!runScrubbing) setRunPos(shown ? t / shown : 0, t, shown);
 }
 
 function setRunPos(frac, t, dur) {
@@ -1465,15 +1507,18 @@ function setRunPos(frac, t, dur) {
 const PLAY_GLYPH = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>';
 const PAUSE_GLYPH = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1.2"/><rect x="13.5" y="5.5" width="4" height="13" rx="1.2"/></svg>';
 
-function viewRun() {
+// One audio page: a heading, the track's card, and an optional line below.
+function audioPageHTML(key, heading, guide) {
   const a = getRunAudio();
+  if (a.paused) useTrack(key);
+  const live = runTrack === key && !a.paused;
   return `
     ${topbar('#/', 'Home')}
-    <div class="dayhead"><div class="dayhead-name">Running + meditation</div></div>
-    <div class="audio-card">
+    <div class="dayhead"><div class="dayhead-name">${esc(heading)}</div></div>
+    <div class="audio-card" data-track="${key}">
       <div class="audio-top">
-        <button class="audio-play" data-action="run-play" aria-label="${a.paused ? 'Play' : 'Pause'}">${a.paused ? PLAY_GLYPH : PAUSE_GLYPH}</button>
-        <div class="audio-name">${esc(RUN_AUDIO.title)}</div>
+        <button class="audio-play" data-action="run-play" data-track="${key}" aria-label="${live ? 'Pause' : 'Play'}">${live ? PAUSE_GLYPH : PLAY_GLYPH}</button>
+        <div class="audio-name">${esc(AUDIO_TRACKS[key].title)}</div>
       </div>
       <div>
         <div class="scrub" role="slider" tabindex="0" aria-label="Position" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
@@ -1481,13 +1526,28 @@ function viewRun() {
         </div>
         <div class="scrub-times"><span data-t="el">0:00</span><span data-t="left">−0:00</span></div>
       </div>
-    </div>`;
+    </div>
+    ${guide ? `<p class="audio-guide">${esc(guide)}</p>` : ''}`;
+}
+
+function viewRun() {
+  return audioPageHTML('run', 'Running + meditation');
+}
+
+/* ---- floor lesson ----
+   "When One Part Moves, the Whole Body Responds" (Everything
+   Communicates): the recording only, on the same player as the run audio. */
+function viewLesson() {
+  return audioPageHTML('lesson', 'Lesson',
+    'Lie on your back on a mat or carpet, knees bent, feet on the floor. Move slowly and smaller than you think, and rest whenever you like.');
 }
 
 function wireRunView() {
   const a = getRunAudio();
   const track = $('.scrub');
   if (!track) return;
+  const key = track.closest('.audio-card').getAttribute('data-track') || 'run';
+  const mine = () => runTrack === key;
   const fracAt = (x) => {
     const r = track.getBoundingClientRect();
     return Math.max(0, Math.min(1, (x - r.left) / r.width));
@@ -1500,7 +1560,7 @@ function wireRunView() {
   };
   let target = null;
   track.addEventListener('pointerdown', (e) => {
-    if (!Number.isFinite(a.duration)) return;
+    if (!mine() || !Number.isFinite(a.duration)) return;
     runScrubbing = true;
     track.classList.add('dragging');
     try { track.setPointerCapture(e.pointerId); } catch (err) {}
@@ -1520,7 +1580,7 @@ function wireRunView() {
   track.addEventListener('pointercancel', end);
   track.addEventListener('keydown', (e) => {
     const step = { ArrowLeft: -15, ArrowDown: -15, ArrowRight: 15, ArrowUp: 15 }[e.key];
-    if (step == null || !Number.isFinite(a.duration)) return;
+    if (step == null || !mine() || !Number.isFinite(a.duration)) return;
     e.preventDefault();
     a.currentTime = Math.max(0, Math.min(a.duration, a.currentTime + step));
     syncRunUI();
@@ -2373,13 +2433,14 @@ function render() {
   else if (parts[0] === 'strength') html = viewStrength();
   else if (parts[0] === 'phrase') html = viewPhrase();
   else if (parts[0] === 'run') html = viewRun();
+  else if (parts[0] === 'lesson') html = viewLesson();
   else html = viewHome();
   const app = $('#app');
   app.setAttribute('data-view', parts[0] || 'home');
   app.innerHTML = html;
   window.scrollTo(0, 0);
   if (parts[0] === 'video') wireVideoView();
-  if (parts[0] === 'run') wireRunView();
+  if (parts[0] === 'run' || parts[0] === 'lesson') wireRunView();
 }
 
 window.addEventListener('hashchange', render);
@@ -2418,7 +2479,8 @@ document.addEventListener('click', (ev) => {
     return;
   }
   if (action === 'run-play') {
-    const a = getRunAudio();
+    const key = t.getAttribute('data-track') || 'run';
+    const a = runTrack === key ? getRunAudio() : useTrack(key);
     if (a.paused) { runMediaMeta(); a.play().catch(() => toast('Couldn’t start the audio — try again')); }
     else a.pause();
     syncRunUI();

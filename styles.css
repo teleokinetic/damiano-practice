@@ -1251,6 +1251,9 @@ body:has(.vid-busy) .rp-fab { display: none; }
 .door-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .door-name { font-size: 18px; font-weight: 650; letter-spacing: -0.014em; line-height: 1.2; }
 .door-done { font-size: 14px; font-weight: 600; color: var(--brass-ink); }
+.door-sub { font-size: 14px; font-weight: 500; color: var(--dim); }
+.door-tile.lesson { background: var(--brass-wash); color: var(--brass-ink); }
+.door-tile.lesson .ico { width: 30px; height: 30px; }
 .door-arrow {
   width: 32px; height: 32px; flex: none; border-radius: 50%;
   display: grid; place-items: center; background: var(--fill); color: var(--dim);
@@ -1260,7 +1263,8 @@ body:has(.vid-busy) .rp-fab { display: none; }
 /* ---------- strength, phrase, running pages ---------- */
 
 #app[data-view="strength"] .dayhead,
-#app[data-view="run"] .dayhead { margin: 0 0 14px; }
+#app[data-view="run"] .dayhead,
+#app[data-view="lesson"] .dayhead { margin: 0 0 14px; }
 
 /* The phrase page fills the screen: video and its one line centred, Done at the foot. */
 #app[data-view="phrase"] {
@@ -1313,6 +1317,7 @@ body:has(.vid-busy) .rp-fab { display: none; }
   transition: transform 0.16s var(--ease);
 }
 .scrub.dragging .scrub-knob, .scrub:focus-visible .scrub-knob { transform: scale(1.18); }
+.audio-guide { margin: 22px 0 0; padding: 0 2px; font-size: 17px; line-height: 1.45; color: var(--ink); }
 .scrub-times {
   display: flex; justify-content: space-between; margin-top: 2px;
   font-family: var(--num); font-weight: 500; font-size: 16px; color: var(--dim);

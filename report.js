@@ -41,6 +41,8 @@ function reportWhere() {
       where = 'Daily Movement Phrase';
     } else if (parts[0] === 'run') {
       where = 'Running + meditation';
+    } else if (parts[0] === 'lesson') {
+      where = 'Lesson · Everything Communicates';
     } else if (parts[0] === 'settings' || parts[0] === 'import') {
       where = 'Settings';
     }
