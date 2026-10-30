@@ -7,14 +7,14 @@
 //   reps: true      → reps capture alongside the load
 //   bw: true        → bodyweight only, reps without a load row
 //   added: true     → load is added to bodyweight (shows BW when empty)
-//   rest            → 'normal' (2:00) | 'heavy' (3:00)
+//   rest            → 'normal' (3:00) | 'heavy' (3:00)
 //   restSec         → this slot's own rest, overriding the tier
 //   pair / pairRest → slots sharing a pair key alternate sets; pairRest seconds
 //   cut             → 1 = cut first if short on time, 2 = cut next
 //   video           → key into VIDEO_LIFTS (app.js) for filming requests
 
 const SEED_PROGRAM = {
-  specVersion: 'dm-1.0',
+  specVersion: 'dm-1.1',
   days: [
     {
       id: 'dayA',
@@ -28,11 +28,11 @@ const SEED_PROGRAM = {
         },
         {
           id: 'a2', name: 'Bulgarian split squat', target: '3×8–12 /leg', track: true, reps: true, rest: 'normal',
-          cue: '30–60 s between legs · 2:00 after both', video: 'splitsquat',
+          cue: '30–60 s between legs · 3:00 after both', video: 'splitsquat',
         },
         {
           id: 'a3', name: 'One-arm dumbbell row', target: '2×8–12 /side', track: true, reps: true, rest: 'normal',
-          cue: 'Switch sides, then 2:00',
+          cue: 'Switch sides, then 3:00',
         },
         { id: 'a4', name: 'Lateral raise', target: '2×12–20', track: true, reps: true, rest: 'normal', restSec: 90, cut: 2 },
         { id: 'a5', name: 'Hanging knee raise', target: '2×8–15', track: true, reps: true, bw: true, rest: 'normal', restSec: 90, cut: 1 },
@@ -86,7 +86,7 @@ const SEED_PROGRAM = {
         },
         {
           id: 'c4', name: 'One-arm dumbbell row', target: '2×8–12 /side', track: true, reps: true, rest: 'normal',
-          cue: 'Switch sides, then 2:00',
+          cue: 'Switch sides, then 3:00',
         },
         {
           id: 'c5', name: 'Lateral raise', target: '2×12–20', track: true, reps: true, rest: 'normal',

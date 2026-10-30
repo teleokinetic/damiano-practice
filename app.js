@@ -10,7 +10,7 @@
 
 const STORE_KEY = 'damiano-state-v1';
 const V1_KEY = 'damiano-no-v1';        // read-only: migration source, never written
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.8.0';
 
 let state = null;
 
@@ -22,7 +22,8 @@ function defaultState() {
   return {
     version: 2,
     settings: {
-      unit: 'lb', theme: 'auto', restNormal: 120, restHeavy: 180, lastExport: null,
+      unit: 'lb', theme: 'auto', restNormal: 180, restHeavy: 180, lastExport: null,
+      threeMinuteRest: true,
       recalDate: '', targetsOpen: false,
     },
     videoReqs: defaultVideoReqs(),
@@ -92,6 +93,24 @@ function migrateV1Sessions(v1) {
   return out;
 }
 
+function migrateThreeMinuteRest() {
+  if (state.settings.threeMinuteRest) return;
+  // Upgrade the previous default once; retain custom settings and all logs.
+  if (state.settings.restNormal === 120) state.settings.restNormal = 180;
+  const p = state.program;
+  if (p && p.specVersion === 'dm-1.0') {
+    for (const day of p.days) {
+      for (const slot of day.slots) {
+        if (slot.cue === '30–60 s between legs · 2:00 after both') slot.cue = '30–60 s between legs · 3:00 after both';
+        if (slot.cue === 'Switch sides, then 2:00') slot.cue = 'Switch sides, then 3:00';
+      }
+    }
+    p.specVersion = 'dm-1.1';
+  }
+  state.settings.threeMinuteRest = true;
+  save();
+}
+
 function load() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
@@ -99,6 +118,7 @@ function load() {
       const parsed = JSON.parse(raw);
       if (validState(parsed)) {
         state = parsed;
+        migrateThreeMinuteRest();
         // settings added after v2 shipped — backfill on existing devices
         if (state.settings.recalDate == null) state.settings.recalDate = '2026-08-29';
         if (state.settings.targetsOpen == null) state.settings.targetsOpen = false;
@@ -1307,7 +1327,7 @@ function viewHome() {
     </a>
     <a class="door" href="#/lesson">
       <span class="door-tile lesson">${icon('lying', 1.7)}</span>
-      <span class="door-body"><span class="door-name">Everything Communicates</span><span class="door-sub">Floor Lesson · 28 min</span></span>
+      <span class="door-body"><span class="door-name">Connecting Pelvis and Head</span><span class="door-sub">Floor Lesson · 22:44</span></span>
       ${arrow}
     </a>`;
 }
@@ -1380,23 +1400,15 @@ function phraseFullscreen() {
   if (go) go.call(box);
 }
 
-/* ---- running + meditation, and the floor lesson ----
-   Two recordings share one <audio>. It lives outside #app, so it keeps
-   playing while he moves around the app, and the lock screen gets title,
-   play/pause and scrubbing through Media Session. Each page's card names
-   its own track; opening a page loads that track unless the other one is
-   playing, and each track's place is kept when the other is loaded. */
+/* ---- running + meditation ----
+   The audio lives outside #app and keeps its place across page changes.
+   Opening the YouTube lesson pauses it to avoid overlapping playback. */
 
 const AUDIO_TRACKS = {
   run: {
     src: 'media/attuning-to-spaciousness-while-moving.m4a',
     title: 'Attuning to Spaciousness While Moving',
     dur: 847,
-  },
-  lesson: {
-    src: 'media/when-one-part-moves.m4a',
-    title: 'When One Part Moves, the Whole Body Responds',
-    dur: 1717,
   },
 };
 let runAudio = null;
@@ -1534,12 +1546,16 @@ function viewRun() {
   return audioPageHTML('run', 'Running + meditation');
 }
 
-/* ---- floor lesson ----
-   "When One Part Moves, the Whole Body Responds" (Everything
-   Communicates): the recording only, on the same player as the run audio. */
+/* ---- floor lesson ---- */
 function viewLesson() {
-  return audioPageHTML('lesson', 'Lesson',
-    'Lie on your back on a mat or carpet, knees bent, feet on the floor. Move slowly and smaller than you think, and rest whenever you like.');
+  if (runAudio && !runAudio.paused) runAudio.pause();
+  return `
+    ${topbar('#/', 'Home')}
+    <div class="dayhead"><div class="dayhead-name">Lesson</div></div>
+    <div class="lesson-card">
+      <a class="audio-name" href="https://www.youtube.com/watch?v=uyz7yi_4Cqw" target="_blank" rel="noopener noreferrer">Connecting Pelvis and Head</a>
+      <iframe class="lesson-video" src="https://www.youtube-nocookie.com/embed/uyz7yi_4Cqw" title="Connecting Pelvis and Head" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>`;
 }
 
 function wireRunView() {
@@ -2440,7 +2456,7 @@ function render() {
   app.innerHTML = html;
   window.scrollTo(0, 0);
   if (parts[0] === 'video') wireVideoView();
-  if (parts[0] === 'run' || parts[0] === 'lesson') wireRunView();
+  if (parts[0] === 'run') wireRunView();
 }
 
 window.addEventListener('hashchange', render);
