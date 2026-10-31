@@ -620,6 +620,13 @@ body::before {
 /* Everything under the row sits in the name's column, not the ring's. */
 .slot > :not(.slot-row) { margin-left: 40px; }
 .slot-cue { color: var(--dim); font-size: 14.5px; line-height: 1.38; margin-top: -6px; padding-bottom: 12px; }
+.technique-note { border-left: 2px solid var(--brass); padding: 0 0 0 11px; margin-top: 1px; margin-bottom: 12px; }
+.technique-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; color: var(--brass-ink); font-size: 11px; font-weight: 650; letter-spacing: 0.045em; text-transform: uppercase; list-style: none; cursor: pointer; }
+.technique-label::-webkit-details-marker { display: none; }
+.technique-label svg { width: 16px; height: 16px; flex: none; transition: transform 0.16s var(--ease); }
+.technique-note[open] > .technique-label svg { transform: rotate(90deg); }
+.technique-label:focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; border-radius: 4px; }
+.technique-note p { margin: 0 0 6px; color: var(--dim); font-size: 14.5px; line-height: 1.4; }
 .pair-note { font-size: 13px; font-weight: 600; color: var(--brass-ink); margin-top: -6px; padding-bottom: 12px; }
 
 .slot-drawer { padding: 2px 0 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; animation: reveal 0.22s var(--ease); }

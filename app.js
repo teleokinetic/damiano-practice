@@ -10,7 +10,7 @@
 
 const STORE_KEY = 'damiano-state-v1';
 const V1_KEY = 'damiano-no-v1';        // read-only: migration source, never written
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.8.1';
 
 let state = null;
 
@@ -2020,6 +2020,12 @@ function ringHTML(slot, e) {
 // One line per exercise: ring · name over target · today's number. Tapping
 // the row opens a drawer with everything adjustable (steppers, ladder,
 // options, note), so the list keeps one quiet rhythm the whole way down.
+// Approved coaching cues, separate from the exercise prescription and log.
+const TECHNIQUE_NOTES = {
+  'one-arm-dumbbell-row': 'Flat bench, wide stance, shoulders level. Let the scapula glide without rotating your torso. Slow tempo.',
+  'overhead-dumbbell-triceps-extension': '4 seconds down, 2–3 up. Let me know how your neck feels and send a recording.',
+};
+
 function slotCardHTML(day, slot, onMat) {
   const a = state.active && state.active.dayId === day.id ? state.active.entries[slot.id] : null;
   const note = a && a.note ? a.note : '';
@@ -2087,6 +2093,7 @@ function slotCardHTML(day, slot, onMat) {
       </div>
       ${pairNote}
       ${slot.cue ? `<div class="slot-cue">${esc(slot.cue)}</div>` : ''}
+      ${TECHNIQUE_NOTES[slug(slot.name)] ? `<details class="technique-note"><summary class="technique-label"><span>Technique note</span>${icon('chev', 2.2)}</summary><p>${esc(TECHNIQUE_NOTES[slug(slot.name)])}</p></details>` : ''}
       <div class="slot-drawer hidden" data-drawer="${slot.id}">
         ${warmup}${rungs}${menu}${steppers}
         <div class="note-edit" data-noteedit="${slot.id}">
