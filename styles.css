@@ -1331,3 +1331,92 @@ body:has(.vid-busy) .rp-fab { display: none; }
   font-family: var(--num); font-weight: 500; font-size: 16px; color: var(--dim);
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------- notes from Tanner ----------
+   Home's door, the Notes page (Latest card + one row per note) and a
+   note's own page: date line, a coral-washed main focus (or praise),
+   numbered cards in his words, and Reply to Tanner at the foot. */
+
+.door-tile.notes { position: relative; background: var(--brass-wash); color: var(--brass-ink); }
+.door-tile.notes .ico { width: 27px; height: 27px; }
+.door-dot {
+  position: absolute; top: -3px; right: -3px; width: 13px; height: 13px; border-radius: 50%;
+  background: var(--brass); border: 2.5px solid var(--surface);
+}
+
+#app[data-view="notes"] .dayhead { margin: 0 0 4px; }
+.notes-label { margin: 18px 2px 8px; }
+.notes-empty { color: var(--dim); margin-top: 18px; }
+.note-date { font-family: var(--num); font-weight: 500; font-size: 17px; color: var(--dim); font-variant-numeric: tabular-nums; }
+
+.note-latest {
+  display: flex; flex-direction: column; padding: 16px;
+  background: var(--surface); box-shadow: var(--card-shadow); border-radius: var(--r-card);
+  transition: transform 0.16s var(--ease);
+}
+.note-latest:active { transform: scale(0.982); }
+.note-latest-top { display: flex; align-items: center; justify-content: space-between; min-height: 24px; }
+.note-new {
+  font-size: 13.5px; font-weight: 650; color: var(--on-brass); background: var(--brass);
+  border-radius: 999px; padding: 3px 10px;
+}
+.note-latest-title { font-size: 28px; font-weight: 700; letter-spacing: -0.026em; line-height: 1.1; margin-top: 12px; }
+.note-latest-sum { font-size: 16px; color: var(--dim); line-height: 1.45; margin-top: 8px; }
+.note-read {
+  margin-top: 16px; height: 48px; border-radius: var(--r-ctl);
+  background: var(--brass-wash); color: var(--brass-ink);
+  display: flex; align-items: center; justify-content: center; gap: 2px;
+  font-size: 16.5px; font-weight: 600;
+}
+.note-read .ico { width: 17px; height: 17px; }
+
+.note-list { background: var(--surface); box-shadow: var(--card-shadow); border-radius: var(--r-card); overflow: hidden; }
+.note-row {
+  position: relative; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 0 14px 0 16px;
+  transition: background-color 0.16s var(--ease);
+}
+.note-row + .note-row::before { content: ''; position: absolute; left: 16px; right: 0; top: 0; height: 1px; background: var(--sep); }
+.note-row:active { background: var(--fill); }
+.note-row-name { flex: 1; min-width: 0; font-size: 17px; font-weight: 600; }
+.note-row .note-date { font-size: 16px; }
+.note-row .ico { width: 15px; height: 15px; color: var(--dim); }
+.note-unread { width: 8px; height: 8px; border-radius: 50%; background: var(--brass); flex: none; }
+
+.note-meta { font-size: 15px; color: var(--dim); margin: 0 0 4px; }
+#app[data-view="notes"] .note-meta + .dayhead { margin: 0 0 16px; }
+.note-focus { background: var(--brass-wash); border-radius: var(--r-card); padding: 16px; }
+.note-focus .eyebrow { margin: 0; color: var(--brass-ink); }
+.note-focus p { margin-top: 6px; font-size: 21px; font-weight: 650; letter-spacing: -0.015em; line-height: 1.3; }
+.note-focus.praise p { margin-top: 0; font-size: 22px; }
+.note-focus.praise p.sub { margin-top: 6px; font-size: 17px; font-weight: 400; letter-spacing: -0.006em; line-height: 1.45; }
+
+.note-card {
+  margin-top: 14px; padding: 16px;
+  background: var(--surface); box-shadow: var(--card-shadow); border-radius: var(--r-card);
+}
+.note-card > .eyebrow { margin: 0 0 6px; }
+.note-h { display: flex; align-items: baseline; gap: 10px; font-size: 19px; font-weight: 650; letter-spacing: -0.012em; line-height: 1.25; }
+.note-num { font-family: var(--num); font-weight: 600; font-size: 24px; line-height: 1; color: var(--brass-ink); }
+.note-card p { margin-top: 10px; font-size: 16px; line-height: 1.5; color: var(--dim); }
+.note-card p.strong { color: var(--ink); }
+.note-sub { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--sep); }
+.note-sub .eyebrow { margin: 0; }
+.note-img {
+  display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; margin-top: 10px;
+  border-radius: var(--r-ctl); background: var(--inset);
+}
+.note-link {
+  display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 10px 12px 10px 10px;
+  border-radius: 14px; background: var(--fill);
+  transition: transform 0.16s var(--ease);
+}
+.note-link:active { transform: scale(0.98); }
+.note-link-tile { width: 80px; height: 50px; flex: none; border-radius: var(--r-sm); display: grid; place-items: center; background: #000; color: #fff; }
+.note-link-tile svg { width: 16px; height: 16px; }
+.note-link-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.note-link-title { font-size: 16px; font-weight: 650; line-height: 1.25; }
+.note-link-sub { font-size: 13.5px; color: var(--dim); }
+.note-link > .ico { width: 16px; height: 16px; color: var(--dim); }
+.note-closing { margin: 20px 4px 0; font-size: 19px; font-weight: 650; letter-spacing: -0.012em; color: var(--brass-ink); }
+.note-reply { margin-top: 22px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.note-reply .ico { width: 20px; height: 20px; color: var(--brass-ink); }

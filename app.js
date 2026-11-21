@@ -10,7 +10,7 @@
 
 const STORE_KEY = 'damiano-state-v1';
 const V1_KEY = 'damiano-no-v1';        // read-only: migration source, never written
-const APP_VERSION = '1.8.1';
+const APP_VERSION = '1.9.0';
 
 let state = null;
 
@@ -1217,6 +1217,9 @@ const ICON_PATHS = {
   phones: '<path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3.5" y="14" width="4" height="6" rx="1.5"/><rect x="16.5" y="14" width="4" height="6" rx="1.5"/>',
   expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
   rec: '<circle cx="12" cy="12" r="6.5" fill="currentColor" stroke="none"/>',
+  notes: '<path d="M6 3.5h9l3.5 3.5v13.5H6z"/><path d="M14.5 3.5V7.5h4"/><path d="M9 12h6.5M9 15.5h6.5M9 8.5h3"/>',
+  reply: '<path d="M4 5h16v11H9l-5 4z"/>',
+  out: '<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
 };
 function icon(name, sw) {
   return `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw || 2}"
@@ -1315,6 +1318,7 @@ function viewHome() {
     ${topbar()}
     ${greetingHTML()}
     ${strength}
+    ${notesDoorHTML(arrow)}
     <a class="door" href="#/phrase">
       <span class="door-tile phrase"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></span>
       <span class="door-body"><span class="door-name">Daily Movement Phrase</span>${phraseDoneToday() ? '<span class="door-done">Done today</span>' : ''}</span>
@@ -1330,6 +1334,112 @@ function viewHome() {
       <span class="door-body"><span class="door-name">Connecting Pelvis and Head</span><span class="door-sub">Floor Lesson · 22:44</span></span>
       ${arrow}
     </a>`;
+}
+
+/* ---- notes from Tanner ----
+   The notes live in notes.js, newest first. Home gets one door; the Notes
+   page shows the newest as "Latest" and every note as a row; each note has
+   its own page. Opening a note's page is what marks it read. */
+
+function coachNotes() { return typeof COACH_NOTES !== 'undefined' && Array.isArray(COACH_NOTES) ? COACH_NOTES : []; }
+function findNote(id) { return coachNotes().find((n) => n.id === id) || null; }
+function noteUnread(n) { return !(state.notesSeen && state.notesSeen[n.id]); }
+function markNoteSeen(n) {
+  if (!noteUnread(n)) return;
+  state.notesSeen = Object.assign({}, state.notesSeen, { [n.id]: Date.now() });
+  save();
+}
+function noteDate(n) {
+  const [y, m, d] = String(n.date || '').split('-').map(Number);
+  return y ? fmtDate(new Date(y, m - 1, d).getTime()) : '';
+}
+function noteSummary(n) { return n.focus || (n.praise || []).join(' ') || ''; }
+
+function notesDoorHTML(arrow) {
+  const all = coachNotes();
+  if (!all.length) return '';
+  const unread = all.filter(noteUnread);
+  const sub = unread.length
+    ? `<span class="door-done">${unread.length} new · ${esc(unread.map((n) => n.lift.split(' ')[0]).join(', '))}</span>`
+    : `<span class="door-sub">${esc(all[0].lift)} · ${esc(noteDate(all[0]))}</span>`;
+  return `
+    <a class="door" href="#/notes">
+      <span class="door-tile notes">${icon('notes', 1.8)}${unread.length ? '<span class="door-dot"></span>' : ''}</span>
+      <span class="door-body"><span class="door-name">Notes from Tanner</span>${sub}</span>
+      ${arrow}
+    </a>`;
+}
+
+function viewNotes() {
+  const all = coachNotes();
+  const head = `${topbar('#/', 'Home')}<div class="dayhead"><div class="dayhead-name">Notes</div></div>`;
+  if (!all.length) return `${head}<p class="notes-empty">No notes yet.</p>`;
+  const top = all[0];
+  const latest = `
+    <div class="eyebrow notes-label">Latest</div>
+    <a class="note-latest" href="#/notes/${esc(top.id)}">
+      <span class="note-latest-top">
+        ${noteUnread(top) ? '<span class="note-new">New</span>' : '<span></span>'}
+        <span class="note-date">${esc(noteDate(top))}</span>
+      </span>
+      <span class="note-latest-title">${esc(top.title)}</span>
+      ${noteSummary(top) ? `<span class="note-latest-sum">${esc(noteSummary(top))}</span>` : ''}
+      <span class="note-read">Read notes${icon('chev', 2.4)}</span>
+    </a>`;
+  const rows = all.map((n) => `
+    <a class="note-row" href="#/notes/${esc(n.id)}">
+      <span class="note-row-name">${esc(n.lift)}</span>
+      ${noteUnread(n) ? '<span class="note-unread" role="img" aria-label="New"></span>' : ''}
+      <span class="note-date">${esc(noteDate(n))}</span>
+      ${icon('chev', 2.5)}
+    </a>`).join('');
+  return `${head}${latest}<div class="eyebrow notes-label">By lift</div><div class="note-list">${rows}</div>`;
+}
+
+function noteParasHTML(sec) {
+  return (sec.body || []).map((p, i) => `<p class="${i === sec.strong ? 'strong' : ''}">${esc(p)}</p>`).join('');
+}
+function noteSectionHTML(sec, num) {
+  const img = sec.image ? `
+    <div class="note-sub">
+      ${sec.imageLead ? `<div class="eyebrow">${esc(sec.imageLead)}</div>` : ''}
+      <img class="note-img" src="${esc(sec.image.src)}" alt="${esc(sec.image.alt || '')}" loading="lazy">
+      ${sec.imageBody ? `<p>${esc(sec.imageBody)}</p>` : ''}
+    </div>` : '';
+  const link = sec.link ? `
+    <a class="note-link" href="${esc(sec.link.url)}" target="_blank" rel="noopener noreferrer">
+      <span class="note-link-tile">${PLAY_GLYPH}</span>
+      <span class="note-link-body"><span class="note-link-title">${esc(sec.link.title)}</span><span class="note-link-sub">${esc(sec.link.sub || '')}</span></span>
+      ${icon('out', 2.2)}
+    </a>` : '';
+  return `
+    <section class="note-card">
+      ${sec.eyebrow ? `<div class="eyebrow">${esc(sec.eyebrow)}</div>` : ''}
+      <h2 class="note-h">${num ? `<span class="note-num">${num}</span>` : ''}${esc(sec.title)}</h2>
+      ${noteParasHTML(sec)}
+      ${img}
+      ${link}
+    </section>`;
+}
+
+function viewNote(id) {
+  const n = findNote(id);
+  if (!n) { location.hash = '#/notes'; return ''; }
+  markNoteSeen(n);
+  const hero = n.focus
+    ? `<div class="note-focus"><div class="eyebrow">Main focus</div><p>${esc(n.focus)}</p></div>`
+    : n.praise
+      ? `<div class="note-focus praise">${n.praise.map((p, i) => `<p class="${i ? 'sub' : ''}">${esc(p)}</p>`).join('')}</div>`
+      : '';
+  return `
+    ${topbar('#/notes', 'Notes')}
+    <div class="note-meta"><span class="note-date">${esc(noteDate(n))}</span> · from Tanner</div>
+    <div class="dayhead"><div class="dayhead-name">${esc(n.title)}</div></div>
+    ${hero}
+    ${(n.points || []).map((s, i) => noteSectionHTML(s, i + 1)).join('')}
+    ${(n.extras || []).map((s) => noteSectionHTML(s, 0)).join('')}
+    ${n.closing ? `<p class="note-closing">${esc(n.closing)}</p>` : ''}
+    <button class="finishbtn note-reply" data-action="note-reply" data-note="${esc(n.id)}">${icon('reply', 2)}Reply to Tanner</button>`;
 }
 
 /* ---- strength ----
@@ -2457,6 +2567,8 @@ function render() {
   else if (parts[0] === 'phrase') html = viewPhrase();
   else if (parts[0] === 'run') html = viewRun();
   else if (parts[0] === 'lesson') html = viewLesson();
+  else if (parts[0] === 'notes' && parts[1]) html = viewNote(decodeURIComponent(parts[1]));
+  else if (parts[0] === 'notes') html = viewNotes();
   else html = viewHome();
   const app = $('#app');
   app.setAttribute('data-view', parts[0] || 'home');
@@ -2494,6 +2606,11 @@ document.addEventListener('click', (ev) => {
   const dayId = currentDayId();
 
   if (action === 'phrase-fs') { phraseFullscreen(); return; }
+  if (action === 'note-reply') {
+    const n = findNote(t.getAttribute('data-note'));
+    if (typeof openTannerSheet === 'function') openTannerSheet('reply', n ? `Notes · ${n.lift}` : 'Notes');
+    return;
+  }
   if (action === 'phrase-done') {
     const v = $('#phrasevid');
     if (v) v.pause();

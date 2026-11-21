@@ -1,7 +1,7 @@
 /* Damiano — offline shell.
    Bump CACHE when shipping changes so clients pick up the new version. */
 
-const CACHE = 'damiano-v1.8.1';
+const CACHE = 'damiano-v1.9.0';
 // Critical shell is all-or-nothing; fonts/icons are best-effort so one
 // flaky request on gym wifi can't silently sink the whole update.
 const CRITICAL = [
@@ -10,6 +10,7 @@ const CRITICAL = [
   'styles.css',
   'app.js',
   'seed.js',
+  'notes.js',
   'config.js',
   'video.js',
   'upload.js',

@@ -43,6 +43,9 @@ function reportWhere() {
       where = 'Running + meditation';
     } else if (parts[0] === 'lesson') {
       where = 'Lesson · Everything Communicates';
+    } else if (parts[0] === 'notes') {
+      const n = parts[1] && typeof findNote === 'function' ? findNote(decodeURIComponent(parts[1])) : null;
+      where = n ? 'Notes · ' + n.lift : 'Notes';
     } else if (parts[0] === 'settings' || parts[0] === 'import') {
       where = 'Settings';
     }
@@ -79,11 +82,12 @@ function setReportQueue(q) {
 }
 
 async function postReport(r) {
+  const reply = r.kind === 'reply';
   const body = {
-    _subject: `Damiano's Practice — ${r.where}`,
+    _subject: reply ? `Damiano's Practice — Reply · ${r.where}` : `Damiano's Practice — ${r.where}`,
     _template: 'box',
     client: 'Damiano',
-    problem: r.text,
+    [reply ? 'message' : 'problem']: r.text,
     where: r.where,
     when: new Date(r.at).toLocaleString(),
     session: r.session,
@@ -154,18 +158,28 @@ function mountReport() {
   const ta = sheet.querySelector('#rp-text');
   const status = sheet.querySelector('[data-rpstatus]');
   let where = '';
-  const open = (on) => {
+  let kind = 'bug';
+  const COPY = {
+    bug: { title: 'Did you find a bug?', ph: 'Tell me about it and I’ll get it fixed ASAP.' },
+    reply: { title: 'Reply to Tanner', ph: 'Questions, or how it felt to try.' },
+  };
+  const open = (on, k, w) => {
     sheet.classList.toggle('hidden', !on);
     scrim.classList.toggle('hidden', !on);
-    fab.setAttribute('aria-expanded', on ? 'true' : 'false');
+    fab.setAttribute('aria-expanded', on && k !== 'reply' ? 'true' : 'false');
     if (on) {
-      where = reportWhere();
+      kind = k === 'reply' ? 'reply' : 'bug';
+      sheet.querySelector('#rp-title').textContent = COPY[kind].title;
+      ta.placeholder = COPY[kind].ph;
+      where = w || reportWhere();
       sheet.querySelector('[data-rpwhere]').textContent = where;
       status.textContent = '';
       setTimeout(() => ta.focus(), 30);
     }
   };
-  fab.addEventListener('click', () => open(sheet.classList.contains('hidden')));
+  fab.addEventListener('click', () => open(sheet.classList.contains('hidden'), 'bug'));
+  // The notes pages' "Reply to Tanner" opens the same sheet, worded for a reply.
+  window.openTannerSheet = (k, w) => open(true, k, w);
   scrim.addEventListener('click', () => open(false));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !sheet.classList.contains('hidden')) open(false); });
   sheet.querySelector('[data-rp="cancel"]').addEventListener('click', () => open(false));
@@ -174,7 +188,7 @@ function mountReport() {
     if (!text) { status.textContent = 'Add a few words first.'; ta.focus(); return; }
     const btn = ev.currentTarget;
     const r = {
-      text, where, at: Date.now(), version: APP_VERSION,
+      text, where, kind, at: Date.now(), version: APP_VERSION,
       session: reportSessionLines(), errors: recentErrors.join('\n'), device: navigator.userAgent,
     };
     btn.disabled = true;
